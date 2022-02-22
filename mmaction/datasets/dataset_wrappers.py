@@ -69,3 +69,28 @@ class ConcatDataset:
     def __len__(self):
         """Length after repetition."""
         return sum(self.lens)
+
+
+@DATASETS.register_module()
+class MultiVideoMixDataset:
+    """A wrapper of multiple videos mixed dataset.
+
+    Suitable for training on multiple videos mixed data augmentation like
+    mosaic and mixup. For the augmentation pipeline of mixed video data,
+    the `get_indexes` method needs to be provided to obtain the video
+    indexes, and you can set `skip_flags` to change the pipeline running
+    process. At the same time, we provide the `dynamic_scale` parameter
+    to dynamically change the output video size.
+
+    Args:
+        dataset (:obj:`CustomDataset`): The dataset to be mixed.
+        pipeline (Sequence[dict]): Sequence of transform object or
+            config dict to be composed.
+        skip_type_keys (list[str], optional): Sequence of type string to
+            be skip pipeline. Default to None.
+    """
+    def __init__(self,
+                 dataset,
+                 pipeline,
+                 skip_type_keys=None):
+        pass 

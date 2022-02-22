@@ -163,7 +163,7 @@ log_config = dict(
     ])
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/slowfast_acrn_kinetics_pretrained_r50_8x8x1_cosine_10e_ava22_rgb'  # noqa: E501
+work_dir = './work_dirs/slowfast_acar_kinetics_pretrained_r50_8x8x1_cosine_10e_ava22_rgb'  # noqa: E501
 load_from = 'https://download.openmmlab.com/mmaction/recognition/slowfast/slowfast_r50_8x8x1_256e_kinetics400_rgb/slowfast_r50_8x8x1_256e_kinetics400_rgb_20200716-73547d2b.pth'  # noqa: E501
 resume_from = None
 find_unused_parameters = False

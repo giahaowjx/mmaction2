@@ -15,12 +15,10 @@ except (ImportError, ModuleNotFoundError):
 
 
 class HR2O_NL(nn.Module):
-    def __init__(out_channels=512, kernel_size=3, mlp_1x1=False, conv_cfg=dict(type='Conv3d'),
-                 norm_cfg=dict(type='GN3d', requires_grad=True, num_features=out_channels, num_groups=1,
-                               affine=True)):
-        super(HR2O_NL, self).__init__()
+    def __init__(self, out_channels=512, kernel_size=3, mlp_1x1=False, conv_cfg=dict(type='Conv3d')):
+        super().__init__()
         
-        self.hidden_dim = hidden_dim
+        self.out_channels = out_channels
         self.kernel_size = kernel_size
         
         padding = kernel_size // 2
@@ -51,16 +49,16 @@ class HR2O_NL(nn.Module):
         self.kernel_size = 1 if mlp_1x1 else kernel_size
         
         self.conv = ConvModule(
-            out_channel,
+            out_channels,
             out_channels,
             kernel_size=(1, self.kernel_size, self.kernel_size),
             padding=(0, padding, padding),
             bias=False,
-            conv_cfg=conv_cfg,
-            norm_cfg=norm_cfg)
+            conv_cfg=conv_cfg)
+        self.norm = nn.GroupNorm(1, out_channels, affine=True)
         
         
-    def forward(x, rois):
+    def forward(self, x, rois):
         query = self.conv_q(x).unsqueeze(1)
         key = self.conv_k(x).unsqueeze(0)
         value = self.conv_v(x)
@@ -69,7 +67,7 @@ class HR2O_NL(nn.Module):
         
         for roi_ind in set(roi_inds):
             inds = (roi_inds == roi_ind)
-            att = (query[inds] * key[inds]).sum(2) / (self.out_channels ** 0.5)
+            att = (query[inds] * key[:, inds]).sum(2) / (self.out_channels ** 0.5)
             att = nn.Softmax(dim=1)(att)
             virt_feats[inds] = (att.unsqueeze(2) * value[inds]).sum(1)
         
@@ -112,7 +110,7 @@ class ACARHead(nn.Module):
                  act_cfg=dict(type='ReLU', inplace=True),
                  **kwargs):
         
-        self.__init__()
+        super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.stride = stride
@@ -123,7 +121,7 @@ class ACARHead(nn.Module):
         
         self.acrn_head = ACRNHead(in_channels, out_channels, stride, num_convs, conv_cfg, norm_cfg, act_cfg, **kwargs)
         self.max_pool = nn.MaxPool3d(kernel_size=(1, 3, 3), stride=(1, 2, 2), padding=(0, 1, 1))
-        self.hr2o = HR2O_NL()
+        self.hr2o = HR2O_NL(out_channels)
 
         
     def init_weights(self, **kwargs):
@@ -151,7 +149,7 @@ class ACARHead(nn.Module):
         x = self.max_pool(x)
         x = self.hr2o(x, rois)
 
-        return new_feat
+        return x
         
         
 if mmdet_imported:
